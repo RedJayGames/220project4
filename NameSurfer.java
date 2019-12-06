@@ -4,126 +4,168 @@
  CSC 220-02
  
  
- Description: Driver Class
- 
- Capabilities:
+ Description: encapsulates the data for one name, the name and its rank over the years
 
  *************************************************************************/
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.*;
 
-public class NameSurfer {
+import java.util.Scanner;
+
+public class NameRecord {
+
+  private final int START = 1900; // the first decade (at index 0)
+  private final int DECADES = 11; // the number of decades in the dataset
+  private String name = ""; // the baby name
+  private int[] ranks = new int[DECADES]; // the rank of the name in each decade (a rank of 0 means it was not popular enough to recieve a rank)
   
-  public static void main(String[] args) {
-
-    File file = new File("name_data.txt"); // Allows us to pass name data into scanner input stream
-    ArrayList<NameRecord> names = new ArrayList<NameRecord>(); // array list of NameRecord objects, used for iterations
-    Scanner scnr; // Scanner object, used to read files and user input
-    int choice = -1; // used to hold user's choices after prompts
-    boolean quit = false; // quit condtion of program
-    String userName = ""; // name user enters into program
-    NameRecord selectedName = null; // reference used for word selected
-    int userDecade = -1; // int of decade user request to see rank from
+  // constructor
+  public NameRecord(String line) {
     
-    try {
-      scnr = new Scanner(file);
-            
-      while (scnr.hasNextLine()) {
-        names.add(new NameRecord(scnr.nextLine()));
-      }
+    Scanner scnr = new Scanner(line);
+    name = scnr.next();
+    
+    for (int i = 0; i < DECADES; i++) {
+      
+      ranks[i] = Integer.parseInt(scnr.next());
       
     }
-    catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
     
-    System.out.println(names.get(0).getName()+" "+names.get(4428).getName());
-    
-    // Assigns scnanner to user input instead of names file 
-    scnr = new Scanner(System.in);
+  } // closes constructor
 
-    // loop continues until a plot is cleared or program selects to quit program
-    while (!quit) {
-      System.out.println("1 – Find best year for a name\n" +
-                         "2 – Find given rank for a name\n" +
-                         "3 – Plot popularity of a name\n" +
-                         "4 – Clear plot\n" +
-                         "5 – Quit\n" +
-                         "Enter your selection.\n");
-    
-      choice = scnr.nextInt();
-      
-      if (choice < 4 && choice > 0) {
+  // returns the name stored in the object
+  public String getName() {
+
+    return name;
+
+  } // closes getName method
+
+  // returns the rank of a name in the provided decade
+  public int getRank(int decade) {
+
+    return ranks[decade];
+
+  } // closes getRank method
+
+  // returns the year in which the name was most popular
+  public int bestYear() {
+
+    int bestRank = 1100; // it is safe to assume every rank will be less than 1100
+    int bestYear = 0; // will store the value that will eventually be output
+    for (int i = 0; i < ranks.length; i++) {
+
+      if (ranks[i] < bestRank && ranks[i] > 0) {
         
-        System.out.println("\nEnter a name\n");
-        userName = scnr.next();
-
-        if (nameFound(names, userName)) {
-          
-          // If name is found, assigns given name the selectedName reference
-          for (NameRecord name : names) {
-            if (name.getName().equalsIgnoreCase(userName)) {
-              selectedName = name;
-            }
-          }
-
-          switch(choice) {
-            
-            case 1:
-              
-              System.out.println("\nBest year for this name was " + selectedName.bestYear() + "\n");
-              break;
-            
-            case 2:
-              
-              System.out.println("\nEnter decade to find rank in\n");
-              userDecade = scnr.nextInt();
-              
-              // Checks if user enters valid decade
-              while (userDecade < 0 || userDecade > 10) {
-                System.out.println("\nEnter valid decade between: 0-10\n");
-                userDecade = scnr.nextInt();
-              }
-
-              System.out.println("\nRank for decade " + (1900 + (userDecade * 10)) + " was " + selectedName.getRank(userDecade) + "\n");
-              break;
-            
-            case 3:
-              
-              System.out.println("\nPlotting graph...\n");
-              selectedName.plot();
-              break;
-          }
-        }
-        else {
-          System.out.println("\nError: name not found\n");
-        }
-      } 
-      else if (choice == 4) {
-        StdDraw.clear();
+        bestRank = ranks[i];
+        bestYear = START + (i * 10);
+        
       }
-      else {
-        quit = true;
-      }
-
+    
     }
     
-  }
+    return bestYear;
+
+  } // closes bestYear method
+
+  // plots the name's rank over the years as a line graph
+  public void plot() {
+
+    chooseColor();
+    
+    for (int i = 0; i < ranks.length - 1; i++) {
+      
+      StdDraw.line(((double) i / ranks.length), ((double) (1100 + ranks[i]) / 1100 - 1.0), ((double) (i + 1) / ranks.length), ((double) (1100 + ranks[i + 1]) / 1100 - 1.0));
+      
+    }
+      
+  } // closes plot method
   
-  // Checks if user entered name is a part of the names data
-  private static boolean nameFound(ArrayList<NameRecord> names, String userName) { 
+  // overrides the toString method. Although unused by the user, it was utilized during development
+  public String toString() {
     
-    for (NameRecord name : names) {
-
-      if (name.getName().equalsIgnoreCase(userName)) {
-        return true;
-      }
-
+    String output = "Name: " + name;
+    for (int i = 0; i < DECADES; i++) {
+      
+      output += "\nRank in " + (START + (i * 10)) + ": " + ranks[i];
+      
     }
+    
+    return output;
+    
+  } // closes toString method
 
-    return false;
+  // returns the best rank of a name
+  public int bestRank() {
+    
+    int bestRank = 1100; // it is safe to assume every rank will be less than 1100
+    
+    for (int i = 0; i < ranks.length; i++) {
+      
+      if (ranks[i] < bestRank && ranks[i] > 0) {
+        
+        bestRank = ranks[i];
+        
+      }
+      
+    }
+    
+    return bestRank;
+    
+  } // closes bestRank method
 
-  }
+  // helper method that randomly selects a pen color for the plot method
+  private static void chooseColor() {
+    
+    int rand = (int) Math.floor(Math.random() * 10);
+
+    if (rand == 0) {
+      
+      StdDraw.setPenColor(StdDraw.BLACK);
+      
+    } else if (rand == 1) {
+      
+      StdDraw.setPenColor(StdDraw.BLUE);
+      
+    } else if (rand == 2) {
+      
+      StdDraw.setPenColor(StdDraw.CYAN);
+      
+    } else if (rand == 3) {
+      
+      StdDraw.setPenColor(StdDraw.DARK_GRAY);
+      
+    } else if (rand == 4) {
+      
+      StdDraw.setPenColor(StdDraw.GRAY);
+      
+    } else if (rand == 5) {
+      
+      StdDraw.setPenColor(StdDraw.GREEN);
+      
+    } else if (rand == 6) {
+      
+      StdDraw.setPenColor(StdDraw.LIGHT_GRAY);
+      
+    } else if (rand == 7) {
+      
+      StdDraw.setPenColor(StdDraw.MAGENTA);
+      
+    } else if (rand == 8) {
+      
+      StdDraw.setPenColor(StdDraw.ORANGE);
+      
+    } else if (rand == 9) {
+      
+      StdDraw.setPenColor(StdDraw.PINK);
+      
+    } else if (rand == 10) {
+      
+      StdDraw.setPenColor(StdDraw.RED);
+      
+    } else if (rand == 0) {
+      
+      StdDraw.setPenColor(StdDraw.YELLOW);
+      
+    }
+    
+  } // closes chooseColor method
 
 }
